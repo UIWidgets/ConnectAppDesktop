@@ -1,0 +1,8 @@
+{
+    "name": "Unity.Messenger",
+    "references": [
+      "Unity.UIWidgets"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

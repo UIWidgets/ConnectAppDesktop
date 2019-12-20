@@ -16,7 +16,11 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Color = Unity.UIWidgets.ui.Color;
 using static Unity.Messenger.Utils;
+#if UNITY_WINRT
 using File = UnityEngine.Windows.File;
+#else
+using File = System.IO.File;
+#endif
 
 namespace Unity.Messenger.Widgets
 {
@@ -380,6 +384,7 @@ namespace Unity.Messenger.Widgets
                                 )
                             )
                         ),
+#if UNITY_EDITOR
                         new GestureDetector(
                             onTap: () =>
                             {
@@ -466,6 +471,7 @@ namespace Unity.Messenger.Widgets
                                 )
                             )
                         ),
+#endif
                     }
                 ),
             };

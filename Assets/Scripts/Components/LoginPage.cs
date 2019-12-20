@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using RSG;
 using Unity.Messenger;
 using Unity.Messenger.Models;
 using Unity.Messenger.Style;
+using Unity.Messenger.Widgets;
 using Unity.UIWidgets.debugger;
 using Unity.UIWidgets.foundation;
 using Unity.UIWidgets.material;
@@ -40,6 +42,8 @@ namespace ConnectApp.screens {
         private string _email = "";
         private string _password = "";
         FocusScopeNode _focusScopeNode;
+        private bool _isLoginLoading;
+        private bool _isLoginFailed;
 
         bool _isEmailFocus;
         bool _isPasswordFocus;
@@ -65,18 +69,24 @@ namespace ConnectApp.screens {
             }
         }
         
-        public static void loginByEmail(string email, string password) {
+        void loginByEmail(string email, string password) {
             var promise = new Promise<LoginInfo>();
             var para = new Dictionary<string, string> {
                 {"email", email},
                 {"password", password}
             };
+            this._isLoginLoading = true;
+            this._isLoginFailed = false;
             Utils.Post<LoginInfo>($"/api/connectapp/v2/auth/live/login", data: para, (loginInfo) => {
                 Window.loggedIn = loginInfo.userId != null;
                 Window.currentUserId = loginInfo.userId;
+                this._isLoginLoading = false;
                 if (Window.loggedIn) {
                     Window.OnLoggedIn();
                     UserInfoManager.saveUserInfo(loginInfo);
+                }
+                else {
+                    this._isLoginFailed = true;
                 }
             });
         }
@@ -84,7 +94,7 @@ namespace ConnectApp.screens {
         void _login() {
             this._emailFocusNode.unfocus();
             this._passwordFocusNode.unfocus();
-            loginByEmail(this._email, this._password);
+            this.loginByEmail(this._email, this._password);
         }
 
         public override Widget build(BuildContext context) {
@@ -302,7 +312,15 @@ namespace ConnectApp.screens {
                                                     color: Color.white
                                                 )
                                             )
-                                        )
+                                        ),
+                                        new Align(
+                                            alignment: Alignment.centerRight,
+                                            child: _isLoginLoading
+                                                ? new Container(
+                                                    padding: EdgeInsets.only(right: 12),
+                                                    child: new Loading(24, true))
+                                                : new Container()
+                                        ),
                                     }
                                 )
                             )
@@ -313,16 +331,25 @@ namespace ConnectApp.screens {
                             onTap: () => UnityEngine.Application.OpenURL("https://id.unity.com/password/new"),
                             child: new Container(
                             child: new Text(
-                                "忘记密码",
-                                style: new TextStyle(
-                                height: 1,
-                                fontSize: 14,
-                                fontFamily: "Roboto-Regular",
-                                color: new Color(0xFF616161)
+                                    "忘记密码",
+                                    style: new TextStyle(
+                                        height: 1,
+                                        fontSize: 14,
+                                        fontFamily: "Roboto-Regular",
+                                        color: new Color(0xFF616161)
+                                    )
+                                )
                             )
-                            )
-                            )
-                        )
+                        ),
+                        new Container(height: 32),
+                        this._isLoginFailed
+                            ? new Text("登录失败", style: new TextStyle(
+                                        height: 1,
+                                        fontSize: 14,
+                                        fontFamily: "Roboto-Regular",
+                                        color: new Color(0xFFF44336)
+                                    ))
+                            : (Widget) new Container()
                     }
                 )
             );

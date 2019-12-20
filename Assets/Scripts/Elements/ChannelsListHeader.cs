@@ -1,4 +1,6 @@
-﻿using Unity.UIWidgets.painting;
+﻿using System.Collections.Generic;
+using Unity.UIWidgets.material;
+using Unity.UIWidgets.painting;
 using Unity.UIWidgets.ui;
 using Unity.UIWidgets.widgets;
 
@@ -12,7 +14,7 @@ namespace Unity.Messenger
             fontFamily: "PingFang"
         );
         
-        public static readonly EdgeInsets padding = EdgeInsets.only(left: 16);
+        public static readonly EdgeInsets padding = EdgeInsets.only(left: 16, right: 16);
     }
     public partial class Elements
     {
@@ -29,10 +31,22 @@ namespace Unity.Messenger
                         )
                     )
                 ),
-                child: new Text(
-                    "群聊",
-                    style: ChannelsListHeaderConstants.headerTextStyle
-                )
+                child: new Row(children: new List<Widget> {
+                    new Text(
+                        "群聊",
+                        style: ChannelsListHeaderConstants.headerTextStyle
+                    ),
+                    new Expanded(child: new Container()),
+                    new GestureDetector(
+                        onTap: Window.OnLoggedOut,
+                        child: new Text("退出登录",
+                            style: new TextStyle(
+                                fontSize: 14,
+                                color: new Color(0xFF797979)
+                            )
+                        )
+                    )
+                })
             );
         }
     }

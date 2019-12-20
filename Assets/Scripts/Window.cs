@@ -91,6 +91,8 @@ namespace Unity.Messenger
                 }
             }
 
+            Utils.clearCookie();
+            UserInfoManager.clearUserInfo();
             _client.Close();
             UpdateWindowCanvas();
         }

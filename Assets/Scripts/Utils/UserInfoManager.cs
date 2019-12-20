@@ -6,12 +6,10 @@ using UnityEngine;
 
 namespace Unity.Messenger {
     public static class UserInfoManager {
-        const string UserInfoKey = "UserInfo";
+        private const string UserInfoKey = "UserInfo";
 
         public static void saveUserInfo(LoginInfo loginInfo) {
-            if (loginInfo == null) {
-                return;
-            }
+            if (loginInfo == null) return;
 
             var list = new List<LoginInfo> {loginInfo};
             var infoStr = JsonConvert.SerializeObject(list);
@@ -37,9 +35,7 @@ namespace Unity.Messenger {
 
         public static Dictionary<string, User> getUserInfoDict() {
             var info = getUserInfo();
-            if (info.userId.isEmpty()) {
-                return new Dictionary<string, User>();
-            }
+            if (info.userId.isEmpty()) return new Dictionary<string, User>();
 
             var user = new User {
                 fullName = info.userFullName,
@@ -51,9 +47,7 @@ namespace Unity.Messenger {
         }
 
         public static void clearUserInfo() {
-            if (PlayerPrefs.HasKey(key: UserInfoKey)) {
-                PlayerPrefs.DeleteKey(key: UserInfoKey);
-            }
+            if (PlayerPrefs.HasKey(key: UserInfoKey)) PlayerPrefs.DeleteKey(key: UserInfoKey);
         }
     }
 }

@@ -4,22 +4,18 @@ using ConnectApp.screens;
 using Unity.Messenger.Models;
 using Unity.Messenger.Widgets;
 using Unity.UIWidgets.foundation;
-using Unity.UIWidgets.widgets;
+using Unity.UIWidgets.painting;
 using Unity.UIWidgets.rendering;
 using Unity.UIWidgets.scheduler;
-using static Unity.Messenger.Elements;
-using Color = Unity.UIWidgets.ui.Color;
-using Message = Unity.Messenger.Models.Message;
-using Unity.UIWidgets.painting;
 using Unity.UIWidgets.ui;
-using UnityEngine;
+using Unity.UIWidgets.widgets;
 using WebSocketSharp;
+using static Unity.Messenger.Elements;
 using static Unity.Messenger.Utils;
+using Message = Unity.Messenger.Models.Message;
 
-namespace Unity.Messenger.Components
-{
-    public class HomePage : StatefulWidget
-    {
+namespace Unity.Messenger.Components {
+    public class HomePage : StatefulWidget {
         public HomePage(
             Dictionary<string, User> users,
             Dictionary<string, ReadState> readStates,
@@ -29,8 +25,7 @@ namespace Unity.Messenger.Components
             Dictionary<string, bool> hasMoreMembers,
             Dictionary<string, Group> groups,
             Dictionary<string, bool> pullFlags,
-            List<Channel> discoverChannels) : base(Key)
-        {
+            List<Channel> discoverChannels) : base(Key) {
             this.users = users;
             this.readStates = readStates;
             this.messages = messages;
@@ -52,8 +47,7 @@ namespace Unity.Messenger.Components
         internal readonly List<Channel> discoverChannels;
         internal readonly Dictionary<string, bool> pullFlags;
 
-        public override State createState()
-        {
+        public override State createState() {
             return new HomePageState();
         }
 
@@ -62,42 +56,31 @@ namespace Unity.Messenger.Components
 
         internal static HomePageState currentState => Key.currentState;
 
-        internal static HomePageState of(BuildContext buildContext)
-        {
+        internal static HomePageState of(BuildContext buildContext) {
             return (HomePageState) buildContext.ancestorStateOfType(new TypeMatcher<HomePageState>());
         }
     }
 
-    internal class HomePageState : State<HomePage>
-    {
+    internal class HomePageState : State<HomePage> {
         internal string SelectedChannelId;
         internal bool IsShowChannelInfo;
         internal bool IsShowDiscovery;
         internal string ShowingChannelBriefId;
 
-        public void InsertMessage(string channelId, Message message)
-        {
+        public void InsertMessage(string channelId, Message message) {
             if (widget.messages.ContainsKey(channelId))
-            {
                 setState(() => { widget.messages[channelId].Insert(0, message); });
-            }
         }
 
-        public void Ack(string channelId)
-        {
-            if (widget.channels[channelId].lastMessage != null)
-            {
-                setState(() =>
-                {
-                    if (!widget.readStates.ContainsKey(channelId))
-                    {
-                        widget.readStates[channelId] = new ReadState();
-                    }
+        public void Ack(string channelId) {
+            if (widget.channels[channelId].lastMessage != null) {
+                setState(() => {
+                    if (!widget.readStates.ContainsKey(channelId)) widget.readStates[channelId] = new ReadState();
 
                     widget.readStates[channelId].lastMessageId = widget.channels[channelId].lastMessage.id;
                     widget.readStates[channelId].mentionCount = 0;
                 });
-                Post<Models.ReadState>(
+                Post<ReadState>(
                     $"/api/messages/{widget.channels[channelId].lastMessage.id}/ack",
                     new Dictionary<string, string>(),
                     readState => { }
@@ -105,14 +88,11 @@ namespace Unity.Messenger.Components
             }
         }
 
-        public void Select(string channelId, bool toDiscover = false)
-        {
-            using (WindowProvider.of(context).getScope())
-            {
+        public void Select(string channelId, bool toDiscover = false) {
+            using (WindowProvider.of(context).getScope()) {
                 MentionPopup.currentState?.StopMention();
                 Sender.currentState?.Clear();
-                if (Window.NewMessages.isNotEmpty())
-                {
+                if (Window.NewMessages.isNotEmpty()) {
                     Window.NewMessages.ForEach(msg => { Window.Messages[msg.channelId].Insert(0, msg); });
                     Window.NewMessages.Clear();
                 }
@@ -126,68 +106,55 @@ namespace Unity.Messenger.Components
             }
         }
 
-        public void ShowChannelInfo()
-        {
+        public void ShowChannelInfo() {
             MentionPopup.currentState.StopMention();
             IsShowChannelInfo = true;
             setState();
         }
 
-        public void HideChannelInfo()
-        {
+        public void HideChannelInfo() {
             IsShowChannelInfo = false;
             setState();
         }
 
-        public void ShowChannelBrief(string channelId)
-        {
+        public void ShowChannelBrief(string channelId) {
             MentionPopup.currentState.StopMention();
             ShowingChannelBriefId = channelId;
             setState();
         }
 
-        public void HideChannelBrief()
-        {
+        public void HideChannelBrief() {
             ShowingChannelBriefId = null;
             setState();
         }
 
-        public void AddChannel(Channel channel)
-        {
-            setState(() =>
-            {
+        public void AddChannel(Channel channel) {
+            setState(() => {
                 widget.channels[channel.id] = channel;
                 if (channel.lastMessage != null)
-                {
                     widget.users[channel.lastMessage.author.id] = channel.lastMessage.author;
-                }
             });
         }
 
-        public void RemoveChannel(Channel channel)
-        {
-            if (widget.channels.ContainsKey(channel.id))
-            {
+        public void RemoveChannel(Channel channel) {
+            if (widget.channels.ContainsKey(channel.id)) {
                 widget.channels.Remove(channel.id);
                 setState();
             }
         }
 
-        public void Clear()
-        {
+        public void Clear() {
             SelectedChannelId = string.Empty;
             IsShowChannelInfo = false;
         }
 
-        public override void initState()
-        {
+        public override void initState() {
             base.initState();
             SelectedChannelId = string.Empty;
             IsShowChannelInfo = false;
             IsShowDiscovery = false;
 
-            SchedulerBinding.instance.addPostFrameCallback(value =>
-            {
+            SchedulerBinding.instance.addPostFrameCallback(value => {
                 var overlayEntry = new OverlayEntry(
                     ctx => new MentionPopup(
                         widget.users,
@@ -200,15 +167,10 @@ namespace Unity.Messenger.Components
             });
         }
 
-        public Widget BuildNarrow(BuildContext context)
-        {
-            if (!Window.socketConnected)
-            {
-                return CreateNarrowSkeleton();
-            }
+        public Widget BuildNarrow(BuildContext context) {
+            if (!Window.socketConnected) return CreateNarrowSkeleton();
 
-            var stacked = new List<Widget>
-            {
+            var stacked = new List<Widget> {
                 new Container(
                     decoration: new BoxDecoration(
                         color: new Color(0xfff9f9f9),
@@ -227,20 +189,14 @@ namespace Unity.Messenger.Components
             };
 
             if (IsShowDiscovery)
-            {
                 stacked.Add(
                     new Discovery(widget.channels, widget.groups)
                 );
-            }
 
-            if (!SelectedChannelId.IsNullOrEmpty())
-            {
+            if (!SelectedChannelId.IsNullOrEmpty()) {
                 var channel = widget.channels[SelectedChannelId];
                 var previousLastMsgId = widget.readStates[SelectedChannelId].lastMessageId;
-                if (previousLastMsgId == channel.lastMessage?.id)
-                {
-                    previousLastMsgId = null;
-                }
+                if (previousLastMsgId == channel.lastMessage?.id) previousLastMsgId = null;
 
                 stacked.Add(
                     new ChattingWindow(
@@ -255,7 +211,6 @@ namespace Unity.Messenger.Components
                 );
 
                 if (IsShowChannelInfo)
-                {
                     stacked.Add(
                         new ChannelInfo(
                             widget.channels,
@@ -266,16 +221,13 @@ namespace Unity.Messenger.Components
                             SelectedChannelId
                         )
                     );
-                }
 
                 if (ShowingChannelBriefId != null)
-                {
                     stacked.Add(
                         new ChannelBrief(
                             ShowingChannelBriefId
                         )
                     );
-                }
             }
 
             return new Stack(
@@ -283,31 +235,20 @@ namespace Unity.Messenger.Components
             );
         }
 
-        public List<Widget> BuildNavigations()
-        {
-            var navigations = new List<Widget>
-            {
+        public List<Widget> BuildNavigations() {
+            var navigations = new List<Widget> {
                 new SliverToBoxAdapter(
                     child: CreateChannelsListHeader()
                 ),
             };
 
-            if (Window.socketConnected)
-            {
-                if (widget.channels.Count > 0)
-                {
+            if (Window.socketConnected) {
+                if (widget.channels.Count > 0) {
                     var sortedChannels = widget.channels.Values.ToList();
-                    sortedChannels.Sort((c1, c2) =>
-                    {
-                        if (!c1.stickTime.IsNullOrEmpty() && c2.stickTime.IsNullOrEmpty())
-                        {
-                            return -1;
-                        }
+                    sortedChannels.Sort((c1, c2) => {
+                        if (!c1.stickTime.IsNullOrEmpty() && c2.stickTime.IsNullOrEmpty()) return -1;
 
-                        if (c1.stickTime.IsNullOrEmpty() && !c2.stickTime.IsNullOrEmpty())
-                        {
-                            return 1;
-                        }
+                        if (c1.stickTime.IsNullOrEmpty() && !c2.stickTime.IsNullOrEmpty()) return 1;
 
                         var d2 = ExtractTimeFromSnowflakeId(c2.lastMessage?.id ?? c2.id);
                         var d1 = ExtractTimeFromSnowflakeId(c1.lastMessage?.id ?? c1.id);
@@ -327,8 +268,7 @@ namespace Unity.Messenger.Components
                         )
                     );
                 }
-                else
-                {
+                else {
                     navigations.Add(
                         new SliverToBoxAdapter(
                             child: new Container(
@@ -346,8 +286,7 @@ namespace Unity.Messenger.Components
                     );
                 }
 
-                if (widget.discoverChannels.Count > 0)
-                {
+                if (widget.discoverChannels.Count > 0) {
                     navigations.Add(
                         new SliverToBoxAdapter(
                             child: new Container(
@@ -367,8 +306,7 @@ namespace Unity.Messenger.Components
                                     alignment: Alignment.center,
                                     child: new Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: new List<Widget>
-                                        {
+                                        children: new List<Widget> {
                                             new Text(
                                                 "发现群聊",
                                                 style: new TextStyle(
@@ -411,8 +349,7 @@ namespace Unity.Messenger.Components
                     );
                 }
             }
-            else
-            {
+            else {
                 navigations.Add(
                     new SliverToBoxAdapter(
                         child: new Container(
@@ -427,15 +364,11 @@ namespace Unity.Messenger.Components
             return navigations;
         }
 
-        public override Widget build(BuildContext context)
-        {
-            if (!Window.loggedIn) {
-                return new LoginPage();
-            }
+        public override Widget build(BuildContext context) {
+            if (!Window.loggedIn) return new LoginPage();
 
             var width = MediaQuery.of(context).size.width;
             if (width < 750)
-            {
                 return new SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: new SizedBox(
@@ -443,32 +376,24 @@ namespace Unity.Messenger.Components
                         child: BuildNarrow(context)
                     )
                 );
-            }
 
             Widget content = null;
-            if (!Window.socketConnected)
-            {
-                return CreateSkeleton(context);
-            }
+            if (!Window.socketConnected) return CreateSkeleton(context);
 
-            if (IsShowDiscovery)
-            {
+            if (IsShowDiscovery) {
                 content = new Discovery(
                     widget.channels,
                     widget.groups
                 );
             }
-            else if (ShowingChannelBriefId != null)
-            {
+            else if (ShowingChannelBriefId != null) {
                 content = new ChannelBrief(
                     ShowingChannelBriefId
                 );
             }
-            else if (!SelectedChannelId.IsNullOrEmpty())
-            {
+            else if (!SelectedChannelId.IsNullOrEmpty()) {
                 var channel = widget.channels[SelectedChannelId];
-                if (IsShowChannelInfo)
-                {
+                if (IsShowChannelInfo) {
                     content = new ChannelInfo(
                         widget.channels,
                         widget.groups,
@@ -477,13 +402,9 @@ namespace Unity.Messenger.Components
                         widget.users,
                         SelectedChannelId);
                 }
-                else
-                {
+                else {
                     var previousLastMsgId = widget.readStates[SelectedChannelId].lastMessageId;
-                    if (previousLastMsgId == channel.lastMessage?.id)
-                    {
-                        previousLastMsgId = null;
-                    }
+                    if (previousLastMsgId == channel.lastMessage?.id) previousLastMsgId = null;
 
                     content = new ChattingWindow(
                         channel,
@@ -495,15 +416,13 @@ namespace Unity.Messenger.Components
                         previousLastMsgId);
                 }
             }
-            else
-            {
+            else {
                 content = new Discovery(widget.channels, widget.groups);
             }
 
             return new Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: new List<Widget>
-                {
+                children: new List<Widget> {
                     new Container(
                         width: 375,
                         decoration: new BoxDecoration(

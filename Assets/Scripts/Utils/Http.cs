@@ -3,38 +3,28 @@ using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using RSG;
-using Unity.Messenger.Widgets;
 using Unity.UIWidgets.foundation;
-using Unity.UIWidgets.widgets;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Unity.Messenger
-{
-    public partial class Utils
-    {
+namespace Unity.Messenger {
+    public partial class Utils {
         public static void Get<T>(
             string url,
-            Action<T> action)
-        {
+            Action<T> action) {
             Get<T>(
                 url
             ).Then(action);
         }
 
         public static IPromise<T> Get<T>(
-            string url)
-        {
-            return new Promise<T>(isSync: true, resolver: (resolve, reject) =>
-            {
+            string url) {
+            return new Promise<T>(isSync: true, resolver: (resolve, reject) => {
                 var request = UnityWebRequest.Get($"https://connect.unity.com{url}");
                 request.SetRequestHeader("X-Requested-With", "XMLHTTPREQUEST");
-                if (getCookie().isNotEmpty()) {
-                    request.SetRequestHeader("Cookie", getCookie());
-                }
+                if (getCookie().isNotEmpty()) request.SetRequestHeader("Cookie", getCookie());
 
-                request.SendWebRequest().completed += operation =>
-                {
+                request.SendWebRequest().completed += operation => {
                     var content = DownloadHandlerBuffer.GetContent(request);
                     var response = JsonConvert.DeserializeObject<T>(content);
                     resolve(response);
@@ -50,8 +40,7 @@ namespace Unity.Messenger
             string url,
             object data,
             Action<T> action
-        )
-        {
+        ) {
             Post<T>(
                 url,
                 data
@@ -60,32 +49,25 @@ namespace Unity.Messenger
 
         public static IPromise<T> Post<T>(
             string url,
-            object data)
-        {
-            return new Promise<T>(isSync: true, resolver: (resolve, reject) =>
-            {
-                
+            object data) {
+            return new Promise<T>(isSync: true, resolver: (resolve, reject) => {
                 var request = new UnityWebRequest(
                     $"https://connect.unity.com{url}",
                     UnityWebRequest.kHttpVerbPOST
-                )
-                {
+                ) {
                     downloadHandler = new DownloadHandlerBuffer(),
                 };
-                if (data != null)
-                {
+                if (data != null) {
                     var requestBody = JsonConvert.SerializeObject(data);
                     request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(requestBody));
                 }
+
                 UnityWebRequest.ClearCookieCache();
                 request.SetRequestHeader("X-Requested-With", "XMLHTTPREQUEST");
                 request.SetRequestHeader("Content-Type", "application/json");
-                if (getCookie().isNotEmpty()) {
-                    request.SetRequestHeader("Cookie", getCookie());
-                }
+                if (getCookie().isNotEmpty()) request.SetRequestHeader("Cookie", getCookie());
 
-                request.SendWebRequest().completed += operation =>
-                {
+                request.SendWebRequest().completed += operation => {
                     var content = DownloadHandlerBuffer.GetContent(request);
                     var response = JsonConvert.DeserializeObject<T>(content);
                     resolve(response);
@@ -101,8 +83,7 @@ namespace Unity.Messenger
             string url,
             List<IMultipartFormSection> formSections,
             Action<T> action,
-            out Func<float> progress)
-        {
+            out Func<float> progress) {
             PostForm<T>(
                 url,
                 formSections,
@@ -113,22 +94,17 @@ namespace Unity.Messenger
         public static IPromise<T> PostForm<T>(
             string url,
             List<IMultipartFormSection> formSections,
-            out Func<float> progress)
-        {
+            out Func<float> progress) {
             var request = UnityWebRequest.Post(
                 $"https://connect.unity.com{url}",
                 formSections
             );
             request.SetRequestHeader("X-Requested-With", "XMLHTTPREQUEST");
-            if (getCookie().isNotEmpty()) {
-                request.SetRequestHeader("Cookie", getCookie());
-            }
+            if (getCookie().isNotEmpty()) request.SetRequestHeader("Cookie", getCookie());
             progress = () => request.uploadProgress;
-            
-            return new Promise<T>(isSync: true, resolver: (resolve, reject) =>
-            {
-                request.SendWebRequest().completed += operation =>
-                {
+
+            return new Promise<T>(isSync: true, resolver: (resolve, reject) => {
+                request.SendWebRequest().completed += operation => {
                     var content = DownloadHandlerBuffer.GetContent(request);
                     var response = JsonConvert.DeserializeObject<T>(content);
                     resolve(response);
@@ -137,16 +113,13 @@ namespace Unity.Messenger
                         updateCookie(cookie);
                     }
                 };
-                
             });
         }
-        
+
         public const string COOKIE = "Cookie";
-        
-        static string _cookieHeader() {
-            if (PlayerPrefs.GetString(COOKIE).isNotEmpty()) {
-                return PlayerPrefs.GetString(COOKIE);
-            }
+
+        private static string _cookieHeader() {
+            if (PlayerPrefs.GetString(COOKIE).isNotEmpty()) return PlayerPrefs.GetString(COOKIE);
 
             return "";
         }
@@ -167,15 +140,11 @@ namespace Unity.Messenger
                 foreach (var c in cookieArr) {
                     var carr = c.Split('=');
 
-                    if (carr.Length != 2) {
-                        continue;
-                    }
+                    if (carr.Length != 2) continue;
 
                     var name = carr[0].Trim();
                     var value = carr[1].Trim();
-                    if (name == key) {
-                        return value;
-                    }
+                    if (name == key) return value;
                 }
             }
 
@@ -199,12 +168,10 @@ namespace Unity.Messenger
                 foreach (var c in newCookieArr) {
                     var item = c.Split(';').first();
                     var name = item.Split('=').first();
-                    if (cookieDict.ContainsKey(name)) {
+                    if (cookieDict.ContainsKey(name))
                         cookieDict[name] = item;
-                    }
-                    else {
+                    else
                         cookieDict.Add(name, item);
-                    }
                 }
 
                 var updateCookieArr = cookieDict.Values;

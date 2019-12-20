@@ -1,23 +1,20 @@
 ﻿using System.Collections.Generic;
-using Unity.UIWidgets.material;
 using Unity.UIWidgets.painting;
 using Unity.UIWidgets.ui;
 using Unity.UIWidgets.widgets;
 
-namespace Unity.Messenger
-{
-    internal static class ChannelsListHeaderConstants
-    {
+namespace Unity.Messenger {
+    internal static class ChannelsListHeaderConstants {
         public static readonly TextStyle headerTextStyle = new TextStyle(
             fontSize: 24,
             color: new Color(0xff000000),
             fontFamily: "PingFang"
         );
-        
+
         public static readonly EdgeInsets padding = EdgeInsets.only(left: 16, right: 16);
     }
-    public partial class Elements
-    {
+
+    public partial class Elements {
         public static Widget CreateChannelsListHeader() {
             return new Container(
                 height: 64,

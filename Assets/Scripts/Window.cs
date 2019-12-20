@@ -6,43 +6,29 @@ using Newtonsoft.Json;
 using RSG;
 using Unity.Messenger.Components;
 using Unity.Messenger.Models;
-using Unity.UIWidgets.widgets;
-using Unity.Messenger.Widgets;
 using Unity.UIWidgets.engine;
-using UnityEngine;
+using Unity.UIWidgets.widgets;
 using WebSocketSharp;
-using Message = Unity.Messenger.Models.Message;
 
-namespace Unity.Messenger
-{
-    public partial class Window : UIWidgetsPanel
-    {
+namespace Unity.Messenger {
+    public partial class Window : UIWidgetsPanel {
         private static Window _instance;
 
-        private static void UpdateWindowCanvas()
-        {
+        private static void UpdateWindowCanvas() {
             if (_instance != null)
-            {
-                using (_instance.window.getScope())
-                {
+                using (_instance.window.getScope()) {
                     HomePage.currentState.setState();
                 }
-            }
         }
 
-        public static void OnLoggedIn()
-        {
+        public static void OnLoggedIn() {
             Utils.Get<DiscoverChannelsResponse>(
                 "/api/connectapp/v1/channels?discover=true"
             ).Then(discoverResponse => {
                 foreach (var key in discoverResponse.channelMap.Keys)
-                {
                     if (!discoverResponse.channelMap[key].groupId.IsNullOrEmpty())
-                    {
                         discoverResponse.channelMap[key].topic = discoverResponse
                             .groupFullMap[discoverResponse.channelMap[key].groupId].description;
-                    }
-                }
 
                 DiscoverChannels.AddRange(
                     discoverResponse.discoverList
@@ -53,13 +39,10 @@ namespace Unity.Messenger
             });
         }
 
-        private static void SendConnectFrame()
-        {
-            var frameSz = JsonConvert.SerializeObject(new ConnectFrame
-            {
+        private static void SendConnectFrame() {
+            var frameSz = JsonConvert.SerializeObject(new ConnectFrame {
                 opCode = 1,
-                data = new ConnectFrameData
-                {
+                data = new ConnectFrameData {
                     loginSession = Utils.getCookie("LS"),
                     commitId = "0e8d784",
                     properties = new Dictionary<string, object>(),
@@ -70,8 +53,7 @@ namespace Unity.Messenger
             _client.Send(frameSz);
         }
 
-        public static void OnLoggedOut()
-        {
+        public static void OnLoggedOut() {
             loggedIn = false;
             currentUserId = null;
             socketConnected = false;
@@ -84,12 +66,9 @@ namespace Unity.Messenger
             HasMoreMembers.Clear();
             DiscoverChannels.Clear();
             if (_instance != null)
-            {
-                using (_instance.window.getScope())
-                {
+                using (_instance.window.getScope()) {
                     HomePage.currentState.Clear();
                 }
-            }
 
             Utils.clearCookie();
             UserInfoManager.clearUserInfo();
@@ -109,14 +88,12 @@ namespace Unity.Messenger
 
         private const string DefaultWorkspaceId = "05a748aedac0c000";
 
-        private static readonly Dictionary<string, string> OverrideNames = new Dictionary<string, string>
-        {
+        private static readonly Dictionary<string, string> OverrideNames = new Dictionary<string, string> {
             ["00b6435ce0000000"] = "Unity Connect 1号大厅",
             ["00b4f9c5e0000000"] = "Unity Connect 2号大厅",
         };
 
-        private static readonly Dictionary<Type, Action<IFrame>> Processors = new Dictionary<Type, Action<IFrame>>
-        {
+        private static readonly Dictionary<Type, Action<IFrame>> Processors = new Dictionary<Type, Action<IFrame>> {
             [typeof(PingFrame)] = frame => ProcessPingFrame((PingFrame) frame),
             [typeof(ReadyFrame)] = frame => ProcessReadyFrame((ReadyFrame) frame),
             [typeof(MessageCreateFrame)] = frame => ProcessMessageCreateFrame((MessageCreateFrame) frame),
@@ -134,30 +111,27 @@ namespace Unity.Messenger
         internal static readonly List<Message> NewMessages = new List<Message>();
         internal static readonly Dictionary<string, Channel> Channels = new Dictionary<string, Channel>();
         internal static readonly Dictionary<string, Group> Groups = new Dictionary<string, Group>();
+
         private static readonly Dictionary<string, List<ChannelMember>> Members =
             new Dictionary<string, List<ChannelMember>>();
+
         private static readonly Dictionary<string, bool> HasMoreMembers = new Dictionary<string, bool>();
 
         private static readonly List<Channel> DiscoverChannels = new List<Channel>();
 
-        private static IPromise InitializeWebSocket()
-        {
+        private static IPromise InitializeWebSocket() {
             _client = new WebSocket("wss://connect-gateway.unity.com/v1");
-            _client.OnClose += (sender, e) =>
-            {
-                UnityMainThreadDispatcher.Instance().Enqueue(() =>
-                {
+            _client.OnClose += (sender, e) => {
+                UnityMainThreadDispatcher.Instance().Enqueue(() => {
                     reconnecting = true;
                     UpdateWindowCanvas();
                     InitializeWebSocket().Then(SendConnectFrame);
                 });
             };
-            _client.OnMessage += (sender, args) =>
-            {
+            _client.OnMessage += (sender, args) => {
                 var frame = JsonConvert.DeserializeObject<IFrame>(args.Data);
                 var type = frame.GetType();
-                if (Processors.ContainsKey(type))
-                {
+                if (Processors.ContainsKey(type)) {
                     Processors[type](frame);
                     UnityMainThreadDispatcher.Instance().Enqueue(UpdateWindowCanvas);
                 }
@@ -167,33 +141,27 @@ namespace Unity.Messenger
 
         private readonly Application m_Application = new Application();
 
-        protected override void OnEnable()
-        {
+        protected override void OnEnable() {
             base.OnEnable();
             _instance = this;
             UIWidgets.ui.Window.onFrameRateCoolDown = () => { };
             m_Application.OnEnable();
             loggedIn = UserInfoManager.isLogin();
             currentUserId = loggedIn ? UserInfoManager.getUserInfo().userId : null;
-            if (loggedIn) {
-                OnLoggedIn();
-            }
+            if (loggedIn) OnLoggedIn();
         }
 
-        protected override void OnDisable()
-        {
+        protected override void OnDisable() {
             _instance = null;
             base.OnDisable();
         }
 
-        protected override void Update()
-        {
+        protected override void Update() {
             base.Update();
             UnityMainThreadDispatcher.Instance().Update();
         }
 
-        protected override Widget createWidget()
-        {
+        protected override Widget createWidget() {
             return m_Application.CreateWidget(
                 users: Users,
                 readStates: ReadStates,

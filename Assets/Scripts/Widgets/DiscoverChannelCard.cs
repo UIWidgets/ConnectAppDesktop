@@ -1,16 +1,12 @@
-using System;
 using System.Collections.Generic;
-using RSG;
 using Unity.Messenger.Components;
 using Unity.Messenger.Models;
 using Unity.Messenger.Style;
-using Unity.UIWidgets.foundation;
 using Unity.UIWidgets.painting;
 using Unity.UIWidgets.rendering;
 using Unity.UIWidgets.ui;
 using Unity.UIWidgets.widgets;
 using static Unity.Messenger.Elements;
-using Color = Unity.UIWidgets.ui.Color;
 using static Unity.Messenger.Utils;
 
 /**
@@ -18,28 +14,24 @@ using static Unity.Messenger.Utils;
  * widget would provide separated StatelessElement which
  * also is buildContext.
  */
-namespace Unity.Messenger.Widgets
-{
-    public class DiscoverChannelCard : StatefulWidget
-    {
+namespace Unity.Messenger.Widgets {
+    public class DiscoverChannelCard : StatefulWidget {
         internal readonly Channel channel;
         internal readonly Dictionary<string, Channel> channels;
 
         public DiscoverChannelCard(
             Channel channel,
-            Dictionary<string, Channel> channels)
-        {
+            Dictionary<string, Channel> channels) {
             this.channel = channel;
             this.channels = channels;
         }
 
-        public override State createState()
-        {
+        public override State createState() {
             return new DiscoverChannelCardState();
         }
     }
-    public class DiscoverChannelCardState : State<DiscoverChannelCard>
-    {
+
+    public class DiscoverChannelCardState : State<DiscoverChannelCard> {
         private static readonly Decoration NormalDecoration = new BoxDecoration(
             color: new Color(0xffffffff),
             border: new Border(
@@ -70,49 +62,38 @@ namespace Unity.Messenger.Widgets
         private static readonly EdgeInsets LastMessageTimestampMargin = EdgeInsets.only(right: 16);
         private bool m_Joining;
 
-        public override void initState()
-        {
+        public override void initState() {
             base.initState();
             m_Joining = false;
         }
 
-        public override Widget build(BuildContext context)
-        {
+        public override Widget build(BuildContext context) {
             Widget iconWidgetChildren;
             if (m_Joining)
-            {
                 iconWidgetChildren = new Loading(size: 24);
-            }
             else
-            {
                 iconWidgetChildren = new Icon(
                     IconFont.IconFontChevronRight,
                     size: 24,
                     color: new Color(0xff959595)
                 );
-            }
             return new GestureDetector(
-                onTap: () =>
-                {
-                    if (widget.channels.ContainsKey(widget.channel.id))
-                    {
+                onTap: () => {
+                    if (widget.channels.ContainsKey(widget.channel.id)) {
                         var rootState = HomePage.of(context);
                         rootState.Select(widget.channel.id);
                     }
-                    else
-                    {
+                    else {
                         setState(() => m_Joining = true);
-                        var requestUrl = string.IsNullOrEmpty(widget.channel.groupId) ? 
-                            $"/api/connectapp/v1/channels/{widget.channel.id}/join" :
-                            $"/api/connectapp/v1/groups/{widget.channel.groupId}/join";
-                        
+                        var requestUrl = string.IsNullOrEmpty(widget.channel.groupId)
+                            ? $"/api/connectapp/v1/channels/{widget.channel.id}/join"
+                            : $"/api/connectapp/v1/groups/{widget.channel.groupId}/join";
+
                         Post<JoinChannelResponse>(
                             requestUrl,
                             new Dictionary<string, string>()
-                        ).Then(response =>
-                        {
-                            using (WindowProvider.of(context).getScope())
-                            {
+                        ).Then(response => {
+                            using (WindowProvider.of(context).getScope()) {
                                 var state = HomePage.of(context);
                                 var responseChannel = response.channel;
                                 state.AddChannel(responseChannel);
@@ -129,8 +110,7 @@ namespace Unity.Messenger.Widgets
                     decoration: NormalDecoration,
                     child: new Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
-                        children: new List<Widget>
-                        {
+                        children: new List<Widget> {
                             new Container(
                                 margin: ThumbnailMargin,
                                 child: CreateLobbyIcon(
@@ -145,8 +125,7 @@ namespace Unity.Messenger.Widgets
                                     child: new Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: new List<Widget>
-                                        {
+                                        children: new List<Widget> {
                                             new Container(
                                                 margin: ChannelNameMargin,
                                                 height: 24,

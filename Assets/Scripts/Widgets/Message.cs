@@ -402,7 +402,7 @@ namespace Unity.Messenger.Widgets
                         image = new Image(
                             image: ProxiedImage(
                                 $"{attachment.url}.200x0x1.jpg",
-                                cookie: $"LS={Window.loginSession};"
+                                cookie: Utils.getCookie()
                             ),
                             fit: BoxFit.cover
                         );

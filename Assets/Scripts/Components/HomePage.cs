@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using ConnectApp.screens;
 using Unity.Messenger.Models;
 using Unity.Messenger.Widgets;
 using Unity.UIWidgets.foundation;
@@ -428,9 +429,8 @@ namespace Unity.Messenger.Components
 
         public override Widget build(BuildContext context)
         {
-            if (!Window.loggedIn)
-            {
-                return CreateNotLoggedIn();
+            if (!Window.loggedIn) {
+                return new LoginPage();
             }
 
             var width = MediaQuery.of(context).size.width;

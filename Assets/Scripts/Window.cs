@@ -7,8 +7,6 @@ using RSG;
 using Unity.Messenger.Components;
 using Unity.Messenger.Models;
 using Unity.UIWidgets.widgets;
-using UnityEditor;
-using UnityEditor.Connect;
 using Unity.Messenger.Widgets;
 using Unity.UIWidgets.engine;
 using UnityEngine;
@@ -34,53 +32,27 @@ namespace Unity.Messenger
 
         public static void OnLoggedIn()
         {
-            try
+            Utils.Get<DiscoverChannelsResponse>(
+                "/api/connectapp/channels?discover=true"
+            ).Then(discoverResponse =>
             {
-                UnityOAuth.GetAuthorizationCodeAsync("marketplace", response =>
+                foreach (var key in discoverResponse.channelMap.Keys)
                 {
-                    if (response.AuthCode != null)
+                    if (!discoverResponse.channelMap[key].groupId.IsNullOrEmpty())
                     {
-                        Promise.All(
-                            Utils
-                                .Get<EditorSessionTokenResponse>($"/auth/editor?code={response.AuthCode}")
-                                .Then(sessionTokenResponse =>
-                                {
-                                    loginSession = sessionTokenResponse.loginSessionToken;
-                                    currentUserId = sessionTokenResponse.userId;
-                                    loggedIn = true;
-                                    Utils.Get<DiscoverChannelsResponse>(
-                                        "/api/connectapp/channels?discover=true"
-                                    ).Then(discoverResponse =>
-                                    {
-                                        foreach (var key in discoverResponse.channelMap.Keys)
-                                        {
-                                            if (!discoverResponse.channelMap[key].groupId.IsNullOrEmpty())
-                                            {
-                                                discoverResponse.channelMap[key].topic = discoverResponse
-                                                    .groupFullMap[discoverResponse.channelMap[key].groupId].description;
-                                            }
-                                        }
-
-                                        DiscoverChannels.AddRange(
-                                            discoverResponse.discoverList
-                                                .Select(channelId => discoverResponse.channelMap[channelId])
-                                        );
-                                        UpdateWindowCanvas();
-                                    });
-                                    UpdateWindowCanvas();
-                                }),
-                            InitializeWebSocket()
-                        ).Then(SendConnectFrame);
+                        discoverResponse.channelMap[key].topic = discoverResponse
+                            .groupFullMap[discoverResponse.channelMap[key].groupId].description;
                     }
-                });
-            }
-            catch (Exception exception)
-            {
-                if (exception.Message != "User is not logged in or user status invalid.")
-                {
-                    OnLoggedIn();
                 }
-            }
+
+                DiscoverChannels.AddRange(
+                    discoverResponse.discoverList
+                        .Select(channelId => discoverResponse.channelMap[channelId])
+                );
+                UpdateWindowCanvas();
+            });
+            UpdateWindowCanvas();
+            InitializeWebSocket().Then(SendConnectFrame);
         }
 
         private static void SendConnectFrame()
@@ -90,7 +62,6 @@ namespace Unity.Messenger
                 opCode = 1,
                 data = new ConnectFrameData
                 {
-                    loginSession = loginSession,
                     commitId = "0e8d784",
                     properties = new Dictionary<string, object>(),
                     clientType = "connect",
@@ -103,7 +74,6 @@ namespace Unity.Messenger
         public static void OnLoggedOut()
         {
             loggedIn = false;
-            loginSession = null;
             currentUserId = null;
             socketConnected = false;
             Users.Clear();
@@ -126,18 +96,17 @@ namespace Unity.Messenger
             UpdateWindowCanvas();
         }
 
-        [InitializeOnLoadMethod]
+        // [InitializeOnLoadMethod]
         public static void OnLoaded()
         {
-            EditorApplication.update += UnityMainThreadDispatcher.Instance().Update;
-/*            UserStateBridge.OnLoggedIn += OnLoggedIn;
+ /*           EditorApplication.update += UnityMainThreadDispatcher.Instance().Update;
+            UserStateBridge.OnLoggedIn += OnLoggedIn;
             UserStateBridge.OnLoggedOut += OnLoggedOut;
             UserStateBridge.RegisterEvent();*/
         }
 
         private static bool _appFocused;
         internal static bool loggedIn;
-        internal static string loginSession;
         internal static string currentUserId;
         internal static bool socketConnected = false;
         private static WebSocket _client;
@@ -212,33 +181,19 @@ namespace Unity.Messenger
             _instance = this;
             UIWidgets.ui.Window.onFrameRateCoolDown = () => { };
             var icon = Resources.Load<Texture2D>("Images/icon_black");
-            if (EditorGUIUtility.isProSkin) {
-                icon = Resources.Load<Texture2D>("Images/icon_white");
-            }
             m_Application.OnEnable();
-            EditorApplication.update += Update;
         }
 
         protected override void OnDisable()
         {
             _instance = null;
-            EditorApplication.update -= Update;
             base.OnDisable();
         }
 
         protected override void Update()
         {
             base.Update();
-            if (!_appFocused && UnityEditorInternal.InternalEditorUtility.isApplicationActive) {
-                _appFocused = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
-            }
-            else if (_appFocused && !UnityEditorInternal.InternalEditorUtility.isApplicationActive) {
-                _appFocused = UnityEditorInternal.InternalEditorUtility.isApplicationActive;
-                using (_instance.window.getScope())
-                {
-                    Sender.currentState?.UnFocus();
-                }
-            }
+            UnityMainThreadDispatcher.Instance().Update();
         }
 
         protected override Widget createWidget()

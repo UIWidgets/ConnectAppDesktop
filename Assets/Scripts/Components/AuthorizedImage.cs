@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Unity.Messenger.Models;
 using Unity.Messenger.Widgets;
+using Unity.UIWidgets.debugger;
 using Unity.UIWidgets.painting;
 using Unity.UIWidgets.widgets;
 using UnityEngine.Networking;
@@ -32,7 +33,7 @@ namespace Unity.Messenger.Components
             var request = UnityWebRequest.Get(
                 widget.Url
             );
-            request.SetRequestHeader("Cookie", $"LS={Window.loginSession}");
+            request.SetRequestHeader("Cookie", Utils.getCookie());
             var asyncOperation = request.SendWebRequest();
             asyncOperation.completed += operation =>
             {

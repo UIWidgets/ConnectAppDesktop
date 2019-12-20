@@ -77,6 +77,7 @@ namespace Unity.Messenger
                     var requestBody = JsonConvert.SerializeObject(data);
                     request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(requestBody));
                 }
+                UnityWebRequest.ClearCookieCache();
                 request.SetRequestHeader("X-Requested-With", "XMLHTTPREQUEST");
                 request.SetRequestHeader("Content-Type", "application/json");
                 if (getCookie().isNotEmpty()) {

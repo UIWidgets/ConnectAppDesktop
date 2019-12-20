@@ -33,9 +33,8 @@ namespace Unity.Messenger
         public static void OnLoggedIn()
         {
             Utils.Get<DiscoverChannelsResponse>(
-                "/api/connectapp/channels?discover=true"
-            ).Then(discoverResponse =>
-            {
+                "/api/connectapp/v1/channels?discover=true"
+            ).Then(discoverResponse => {
                 foreach (var key in discoverResponse.channelMap.Keys)
                 {
                     if (!discoverResponse.channelMap[key].groupId.IsNullOrEmpty())
@@ -50,9 +49,8 @@ namespace Unity.Messenger
                         .Select(channelId => discoverResponse.channelMap[channelId])
                 );
                 UpdateWindowCanvas();
+                InitializeWebSocket().Then(SendConnectFrame);
             });
-            UpdateWindowCanvas();
-            InitializeWebSocket().Then(SendConnectFrame);
         }
 
         private static void SendConnectFrame()
@@ -62,6 +60,7 @@ namespace Unity.Messenger
                 opCode = 1,
                 data = new ConnectFrameData
                 {
+                    loginSession = Utils.getCookie("LS"),
                     commitId = "0e8d784",
                     properties = new Dictionary<string, object>(),
                     clientType = "connect",
@@ -94,15 +93,6 @@ namespace Unity.Messenger
 
             _client.Close();
             UpdateWindowCanvas();
-        }
-
-        // [InitializeOnLoadMethod]
-        public static void OnLoaded()
-        {
- /*           EditorApplication.update += UnityMainThreadDispatcher.Instance().Update;
-            UserStateBridge.OnLoggedIn += OnLoggedIn;
-            UserStateBridge.OnLoggedOut += OnLoggedOut;
-            UserStateBridge.RegisterEvent();*/
         }
 
         private static bool _appFocused;
@@ -180,8 +170,12 @@ namespace Unity.Messenger
             base.OnEnable();
             _instance = this;
             UIWidgets.ui.Window.onFrameRateCoolDown = () => { };
-            var icon = Resources.Load<Texture2D>("Images/icon_black");
             m_Application.OnEnable();
+            loggedIn = UserInfoManager.isLogin();
+            currentUserId = loggedIn ? UserInfoManager.getUserInfo().userId : null;
+            if (loggedIn) {
+                OnLoggedIn();
+            }
         }
 
         protected override void OnDisable()

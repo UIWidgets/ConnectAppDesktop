@@ -11,6 +11,7 @@ namespace Unity.Messenger.Models
 
     public class ConnectFrameData
     {
+        [JsonProperty("ls")] public string loginSession { get; set; }
         [JsonProperty("commitId")] public string commitId { get; set; }
         [JsonProperty("properties")] public Dictionary<string, object> properties { get; set; }
         [JsonProperty("clientType")] public string clientType { get; set; }

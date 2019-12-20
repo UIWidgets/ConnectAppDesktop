@@ -14,9 +14,10 @@ using Unity.UIWidgets.Redux;
 using Unity.UIWidgets.rendering;
 using Unity.UIWidgets.scheduler;
 using Unity.UIWidgets.service;
-using Unity.UIWidgets.ui;
 using Unity.UIWidgets.widgets;
+using UnityEngine;
 using UnityEngine.UI;
+using Color = Unity.UIWidgets.ui.Color;
 using InputField = Unity.Messenger.InputField;
 using Text = Unity.UIWidgets.widgets.Text;
 using Window = Unity.Messenger.Window;
@@ -64,23 +65,26 @@ namespace ConnectApp.screens {
             }
         }
         
-        public static void LoginByEmail(string email, string password) {
+        public static void loginByEmail(string email, string password) {
             var promise = new Promise<LoginInfo>();
             var para = new Dictionary<string, string> {
                 {"email", email},
                 {"password", password}
             };
             Utils.Post<LoginInfo>($"/api/connectapp/v2/auth/live/login", data: para, (loginInfo) => {
-                Window.loggedIn = true;
+                Window.loggedIn = loginInfo.userId != null;
                 Window.currentUserId = loginInfo.userId;
-                Window.OnLoggedIn();
+                if (Window.loggedIn) {
+                    Window.OnLoggedIn();
+                    UserInfoManager.saveUserInfo(loginInfo);
+                }
             });
         }
 
         void _login() {
             this._emailFocusNode.unfocus();
             this._passwordFocusNode.unfocus();
-            LoginByEmail(this._email, this._password);
+            loginByEmail(this._email, this._password);
         }
 
         public override Widget build(BuildContext context) {
@@ -144,7 +148,7 @@ namespace ConnectApp.screens {
                                         "创建 Unity ID",
                                         style: new TextStyle(
                                             height: 1,
-                                            fontSize: 28,
+                                            fontSize: 16,
                                             fontFamily: "Roboto-Medium",
                                             color: new Color(0xFF2196F3)
                                         )
@@ -160,7 +164,7 @@ namespace ConnectApp.screens {
                             "登录你的Unity账号",
                             style: new TextStyle(
                                 height: 1.11f,
-                                fontSize: 48,
+                                fontSize: 32,
                                 fontFamily: "Roboto-Bold",
                                 color: Colors.black
                             )
@@ -182,7 +186,7 @@ namespace ConnectApp.screens {
                                 "邮箱",
                                 style: new TextStyle(
                                     height: 1.46f,
-                                    fontSize: 24,
+                                    fontSize: 14,
                                     fontFamily: "Roboto-Medium",
                                     color: new Color(0xFF797979)
                                 )
@@ -206,7 +210,7 @@ namespace ConnectApp.screens {
                                 autofocus: true,
                                 style: new TextStyle(
                                     height: 1.33f,
-                                    fontSize: 28,
+                                    fontSize: 16,
                                     fontFamily: "Roboto-Regular",
                                     color: new Color(0xFF212121)
                                 ),
@@ -228,7 +232,7 @@ namespace ConnectApp.screens {
                                 "密码",
                                 style: new TextStyle(
                                     height: 1.46f,
-                                    fontSize: 24,
+                                    fontSize: 14,
                                     fontFamily: "Roboto-Medium",
                                     color: new Color(0xFF797979)
                                 )
@@ -253,7 +257,7 @@ namespace ConnectApp.screens {
                                 obscureText: true,
                                 style: new TextStyle(
                                     height: 1.33f,
-                                    fontSize: 28,
+                                    fontSize: 16,
                                     fontFamily: "Roboto-Regular",
                                     color: new Color(0xFF212121)
                                 ),
@@ -282,7 +286,7 @@ namespace ConnectApp.screens {
                                 height: 48,
                                 decoration: new BoxDecoration(
                                     new Color(0xFF2196F3),
-                                    borderRadius: BorderRadius.all(24)
+                                    borderRadius: BorderRadius.all(14)
                                 ),
                                 child: new Stack(
                                     children: new List<Widget> {
@@ -293,7 +297,7 @@ namespace ConnectApp.screens {
                                                 maxLines: 1,
                                                 style: new TextStyle(
                                                     height: 1.33f,
-                                                    fontSize: 28,
+                                                    fontSize: 16,
                                                     fontFamily: "Roboto-Regular",
                                                     color: Color.white
                                                 )
@@ -312,7 +316,7 @@ namespace ConnectApp.screens {
                                 "忘记密码",
                                 style: new TextStyle(
                                 height: 1,
-                                fontSize: 24,
+                                fontSize: 14,
                                 fontFamily: "Roboto-Regular",
                                 color: new Color(0xFF616161)
                             )

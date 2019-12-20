@@ -8,6 +8,7 @@ using Unity.Messenger.Components;
 using Unity.Messenger.Models;
 using Unity.UIWidgets.engine;
 using Unity.UIWidgets.widgets;
+using UnityEngine;
 using WebSocketSharp;
 
 namespace Unity.Messenger {
@@ -122,11 +123,13 @@ namespace Unity.Messenger {
         private static IPromise InitializeWebSocket() {
             _client = new WebSocket("wss://connect-gateway.unity.com/v1");
             _client.OnClose += (sender, e) => {
-                UnityMainThreadDispatcher.Instance().Enqueue(() => {
-                    reconnecting = true;
-                    UpdateWindowCanvas();
-                    InitializeWebSocket().Then(SendConnectFrame);
-                });
+                if (e.Code != 1005) {
+                    UnityMainThreadDispatcher.Instance().Enqueue(() => {
+                        reconnecting = true;
+                        UpdateWindowCanvas();
+                        InitializeWebSocket().Then(SendConnectFrame);
+                    });
+                }
             };
             _client.OnMessage += (sender, args) => {
                 var frame = JsonConvert.DeserializeObject<IFrame>(args.Data);
